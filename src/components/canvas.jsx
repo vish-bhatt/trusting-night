@@ -105,6 +105,10 @@ class Canvas extends Component {
             myshape2_bg = shapes_copy[this.state.activeShapeIndex + 1];
             myshape2 = shapes_copy[this.state.activeShapeIndex + 2];
             newActiveShapeIndex = this.state.activeShapeIndex;
+            diffx =
+              //parseInt(myshape.getAttribute("radius")) +
+              Math.abs(ex - parseInt(myshape.getAttribute("cx"))); // / 2;
+            document.getElementById("diagramLabel").innerHTML = diffx;
           } else {
             myshape = shapes_copy[this.state.sourceShapeIndex];
             myshape2_bg = shapes_copy[this.state.sourceShapeIndex + 1];
@@ -218,8 +222,8 @@ class Canvas extends Component {
       mousePressed: true,
       cx: window.event.pageX - this.state.boundingClientRect.left,
       cy: window.event.pageY - this.state.boundingClientRect.top,
-      activeShapeIndex: -1,
-      sourceShapeIndex: shapeIndex
+      activeShapeIndex: shapeIndex,
+      sourceShapeIndex: -1
     });
   }
 
