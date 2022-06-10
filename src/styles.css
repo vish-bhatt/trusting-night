@@ -1,0 +1,56 @@
+.App {
+  font-family: sans-serif;
+  text-align: center;
+  display: inline-block;
+  width: 100%;
+  min-height: 80%;
+}
+
+.Header {
+  font-size: xx-large;
+  text-align: left;
+  background-color: grey;
+  color: white;
+  border: solid 3px white;
+  padding: 5px;
+}
+
+.ToolbarButton {
+  font-size: x-large;
+  background-color: grey;
+  color: white;
+  border: solid 3px white;
+  display: table-cell;
+  width: 35px;
+  height: 35px;
+  margin: 1px;
+  cursor: pointer;
+}
+
+.ToolbarButtonMouseDown {
+  background-color: lightgreen;
+}
+
+.ToolbarButtonMouseUp {
+  background-color: green;
+}
+
+.ToolbarButtonOnMouseDown {
+  background-color: gainsboro;
+}
+
+.Canvas {
+  border: solid 3px white;
+  text-align: left;
+  font-size: small;
+  height: 80vh;
+  background-image: radial-gradient(
+    farthest-corner at 40px 40px,
+    white 0%,
+    gainsboro 100%
+  );
+}
+
+svg {
+  border: solid 1px black;
+}
