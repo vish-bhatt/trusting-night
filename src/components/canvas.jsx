@@ -3,11 +3,13 @@ import React, { Component } from "react";
 class Canvas extends Component {
   state = {
     boundingClientRect: null,
+    numShapesToIgnore: 0,
     mousePressed: false,
     cx: -1,
     cy: -1,
     activeShapeIndex: -1,
     sourceShapeIndex: -1,
+    sinkShapeIndex: -1,
     shapes: []
   };
 
@@ -18,6 +20,12 @@ class Canvas extends Component {
 
   componentDidMount() {
     const shapes_copy = [...this.state.shapes];
+    /* tested arrowhead...
+    const mydefs = document.createElement("defs");
+    mydefs.innerHTML =
+      "<marker id='pointerRight' markerWidth='10' markerHeight='15' refX='7' refY='7.5' orient='-90' markerUnits='userSpaceOnUse'><polyline points='1 1, 9 7, 1 14' stroke='black' fill='none'/></marker>";
+    shapes_copy.push(mydefs);
+    */
     const myshape = document.createElement("text");
     myshape.setAttribute("id", "diagramLabel");
     myshape.setAttribute("x", 0);
@@ -30,6 +38,7 @@ class Canvas extends Component {
       boundingClientRect: document
         .getElementById("canvas")
         .getBoundingClientRect(),
+      numShapesToIgnore: shapes_copy.length,
       shapes: shapes_copy
     });
   }
@@ -52,10 +61,7 @@ class Canvas extends Component {
         let myshape2 = null;
         let myshape2_bg = null;
         let newActiveShapeIndex = -1;
-        if (
-          this.state.activeShapeIndex === -1 &&
-          this.state.sourceShapeIndex === -1
-        ) {
+        if (this.state.activeShapeIndex === -1) {
           myshape = document.createElement("circle");
           myshape.setAttribute("cx", this.state.cx);
           myshape.setAttribute("cy", this.state.cy);
@@ -65,11 +71,12 @@ class Canvas extends Component {
           myshape.setAttribute(
             "onmousedown",
             "Canvas_render.diagramShapeMouseDown(" +
-              (this.numLabledShapes() * 3 + 1) +
+              (this.numLabledShapes() * 3 + this.state.numShapesToIgnore) +
               ")"
           );
           shapes_copy.push(myshape);
-          newActiveShapeIndex = this.numLabledShapes() * 3 + 1;
+          newActiveShapeIndex =
+            this.numLabledShapes() * 3 + this.state.numShapesToIgnore;
           myshape2_bg = document.createElement("rect");
           myshape2_bg.setAttribute(
             "style",
@@ -80,7 +87,7 @@ class Canvas extends Component {
           myshape2_bg.setAttribute("fill", "grey");
           shapes_copy.push(myshape2_bg);
           myshape2 = document.createElement("text");
-          let newValue = "System0" + this.numLabledShapes() + ".00";
+          let newValue = "System0" + Math.floor(this.numLabledShapes()) + ".00";
           const newValueWidth = this.getTextWidth(newValue);
           myshape2.setAttribute(
             "style",
@@ -100,24 +107,13 @@ class Canvas extends Component {
           myshape2.innerHTML = newValue;
           shapes_copy.push(myshape2);
         } else {
-          if (this.state.sourceShapeIndex === -1) {
-            myshape = shapes_copy[this.state.activeShapeIndex];
-            myshape2_bg = shapes_copy[this.state.activeShapeIndex + 1];
-            myshape2 = shapes_copy[this.state.activeShapeIndex + 2];
-            newActiveShapeIndex = this.state.activeShapeIndex;
-            diffx =
-              //parseInt(myshape.getAttribute("radius")) +
-              Math.abs(ex - parseInt(myshape.getAttribute("cx"))); // / 2;
-            document.getElementById("diagramLabel").innerHTML = diffx;
-          } else {
-            myshape = shapes_copy[this.state.sourceShapeIndex];
-            myshape2_bg = shapes_copy[this.state.sourceShapeIndex + 1];
-            myshape2 = shapes_copy[this.state.sourceShapeIndex + 2];
-            diffx =
-              //parseInt(myshape.getAttribute("radius")) +
-              Math.abs(ex - parseInt(myshape.getAttribute("cx"))); // / 2;
-            document.getElementById("diagramLabel").innerHTML = diffx;
-          }
+          myshape = shapes_copy[this.state.activeShapeIndex];
+          myshape2_bg = shapes_copy[this.state.activeShapeIndex + 1];
+          myshape2 = shapes_copy[this.state.activeShapeIndex + 2];
+          newActiveShapeIndex = this.state.activeShapeIndex;
+          diffx =
+            //parseInt(myshape.getAttribute("radius")) +
+            Math.abs(ex - parseInt(myshape.getAttribute("cx"))); // / 2;
         }
         myshape.setAttribute("r", diffx);
         myshape2.setAttribute(
@@ -149,7 +145,7 @@ class Canvas extends Component {
   }
 
   numLabledShapes() {
-    return (this.state.shapes.length - 1) / 3;
+    return (this.state.shapes.length - this.state.numShapesToIgnore) / 3;
   }
 
   canvasMouseUp(e) {
@@ -160,24 +156,21 @@ class Canvas extends Component {
         "radius",
         shapes_copy[this.state.activeShapeIndex].getAttribute("r")
       );
-    } else if (this.state.sourceShapeIndex !== -1) {
-      shapes_copy[this.state.sourceShapeIndex].setAttribute(
-        "radius",
-        shapes_copy[this.state.sourceShapeIndex].getAttribute("r")
-      );
     }
     */
     this.setState({
       mousePressed: false,
       cx: -1,
       cy: -1,
-      activeShapeIndex: -1,
-      sourceShapeIndex: -1 //,
+      activeShapeIndex: -1 //,
+      //sourceShapeIndex: -1,
+      //sinkShapeIndex: -1
       //shapes: shapes_copy
     });
   }
 
   diagramTextMouseUp(shapeIndex) {
+    if (shapeIndex === 0) return;
     const shapes_copy = [...this.state.shapes];
     let newValue =
       prompt(
@@ -218,12 +211,46 @@ class Canvas extends Component {
   }
 
   diagramShapeMouseDown(shapeIndex) {
+    const shapes_copy = [...this.state.shapes];
+    let newSourceShapeIndex = -1;
+    if (this.state.sourceShapeIndex === -1) {
+      newSourceShapeIndex = shapeIndex;
+    } else {
+      if (shapeIndex !== this.state.sourceShapeIndex) {
+        this.simpleLog(this.state.sourceShapeIndex + " -> " + shapeIndex);
+        let myshape = null;
+        let myshape2 = null; //start here
+        let myshape2_bg = null;
+        myshape = document.createElement("line");
+        myshape.setAttribute(
+          "x1",
+          shapes_copy[this.state.sourceShapeIndex].getAttribute("cx")
+        );
+        myshape.setAttribute(
+          "y1",
+          shapes_copy[this.state.sourceShapeIndex].getAttribute("cy")
+        );
+        myshape.setAttribute("x2", shapes_copy[shapeIndex].getAttribute("cx"));
+        myshape.setAttribute("y2", shapes_copy[shapeIndex].getAttribute("cy"));
+        myshape.setAttribute("stroke", "black");
+        myshape.setAttribute("stroke-width", 1.5);
+        myshape.setAttribute("marker-end", "url(#pointerRight)");
+        myshape.setAttribute(
+          "onmousedown",
+          "alert('hi1'); Canvas_render.diagramShapeMouseDown(" +
+            (this.numLabledShapes() * 3 + this.state.numShapesToIgnore) +
+            ")"
+        );
+        shapes_copy.push(myshape);
+      }
+    }
     this.setState({
       mousePressed: true,
       cx: window.event.pageX - this.state.boundingClientRect.left,
       cy: window.event.pageY - this.state.boundingClientRect.top,
       activeShapeIndex: shapeIndex,
-      sourceShapeIndex: -1
+      sourceShapeIndex: newSourceShapeIndex,
+      shapes: shapes_copy
     });
   }
 
@@ -234,6 +261,14 @@ class Canvas extends Component {
     const textWidth = ctx.measureText(text).width;
     canvas = null;
     return textWidth;
+  }
+
+  simpleLog(msg) {
+    const shapes_copy = [...this.state.shapes];
+    shapes_copy[0].innerHTML = shapes_copy[0].innerHTML + " " + msg;
+    this.setState({
+      shapes: shapes_copy
+    });
   }
 
   render() {
